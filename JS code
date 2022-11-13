@@ -1,0 +1,174 @@
+1. common.js:
+window.addEventListener("load", function () {
+var signup_form = document.getElementById("signup-form");
+signup_form.addEventListener("submit", function (event) {
+var XHR = new XMLHttpRequest();
+var form_data = new FormData(signup_form);
+// On success
+XHR.addEventListener("load", signup_success);
+// On error
+XHR.addEventListener("error", on_error);
+// Set up request
+XHR.open("POST", "api/signup_submit.php");
+// Form data is sent with request
+XHR.send(form_data);
+document.getElementById("loading").style.display = 'block';
+event.preventDefault();
+});
+var login_form = document.getElementById("login-form");
+login_form.addEventListener("submit", function (event) {
+var XHR = new XMLHttpRequest();
+var form_data = new FormData(login_form);
+// On success
+XHR.addEventListener("load", login_success);
+// On error
+XHR.addEventListener("error", on_error);
+// Set up request
+XHR.open("POST", "api/login_submit.php");
+// Form data is sent with request
+XHR.send(form_data);
+document.getElementById("loading").style.display = 'block';
+event.preventDefault();
+});
+});
+var signup_success = function (event) {
+document.getElementById("loading").style.display = 'none';
+var response = JSON.parse(event.target.responseText);
+if (response.success) {
+alert(response.message);
+window.location.href = "index.php";
+} else {
+56
+alert(response.message);
+}
+};
+var login_success = function (event) {
+document.getElementById("loading").style.display = 'none';
+var response = JSON.parse(event.target.responseText);
+if (response.success) {
+location.reload();
+} else {
+alert(response.message);
+}
+};
+var on_error = function (event) {
+document.getElementById("loading").style.display = 'none';
+alert('Oops! Something went wrong.');
+};
+2. dashboard.js:
+window.addEventListener("load", function () {
+var is_interested_images = document.getElementsByClassName("is-interested-image");
+Array.from(is_interested_images).forEach(element => {
+element.addEventListener("click", function (event) {
+var XHR = new XMLHttpRequest();
+var property_id = event.target.getAttribute("property_id");
+// On success
+XHR.addEventListener("load", remove_interested_success);
+// On error
+XHR.addEventListener("error", on_error);
+// Set up request
+XHR.open("GET", "api/toggle_interested.php?property_id=" + property_id);
+// Initiate the request
+XHR.send();
+document.getElementById("loading").style.display = 'block';
+event.preventDefault();
+});
+});
+});
+var remove_interested_success = function (event) {
+document.getElementById("loading").style.display = 'none';
+var response = JSON.parse(event.target.responseText);
+if (response.success) {
+var property_id = response.property_id;
+document.getElementsByClassName("property-id-" + property_id)[0].style.display
+= 'none';
+}
+57
+};
+3. property_list.js:
+window.addEventListener("load", function () {
+var is_interested_images = document.getElementsByClassName("is-interested-image");
+Array.from(is_interested_images).forEach(element => {
+element.addEventListener("click", function (event) {
+var XHR = new XMLHttpRequest();
+var property_id = event.target.getAttribute("property_id");
+// On success
+XHR.addEventListener("load", toggle_interested_success);
+// On error
+XHR.addEventListener("error", on_error);
+// Set up request
+XHR.open("GET", "api/toggle_interested.php?property_id=" + property_id);
+// Initiate the request
+XHR.send();
+document.getElementById("loading").style.display = 'block';
+event.preventDefault();
+});
+});
+});
+var toggle_interested_success = function (event) {
+document.getElementById("loading").style.display = 'none';
+var response = JSON.parse(event.target.responseText);
+if (response.success) {
+var property_id = response.property_id;
+var is_interested_image = document.querySelectorAll(".property-id-" + 
+property_id + " .is-interested-image")[0];
+var interested_user_count = document.querySelectorAll(".property-id-" + 
+property_id + " .interested-user-count")[0];
+if (response.is_interested) {
+is_interested_image.classList.add("fas");
+is_interested_image.classList.remove("far");
+interested_user_count.innerHTML = 
+parseFloat(interested_user_count.innerHTML) + 1;
+} else {
+is_interested_image.classList.add("far");
+is_interested_image.classList.remove("fas");
+interested_user_count.innerHTML = 
+parseFloat(interested_user_count.innerHTML) - 1;
+}
+} else if (!response.success && !response.is_logged_in) {
+window.$("#login-modal").modal("show");
+58
+}
+};
+4. property_detail.js:
+window.addEventListener("load", function () {
+const search = window.location.search;
+const params = new URLSearchParams(search);
+const property_id = params.get('property_id');
+var is_interested_image = document.getElementsByClassName("is-interestedimage")[0];
+is_interested_image.addEventListener("click", function (event) {
+var XHR = new XMLHttpRequest();
+// On success
+XHR.addEventListener("load", toggle_interested_success);
+// On error
+XHR.addEventListener("error", on_error);
+// Set up request
+XHR.open("GET", "api/toggle_interested.php?property_id=" + property_id);
+// Initiate the request
+XHR.send();
+document.getElementById("loading").style.display = 'block';
+event.preventDefault();
+});
+});
+var toggle_interested_success = function (event) {
+document.getElementById("loading").style.display = 'none';
+var response = JSON.parse(event.target.responseText);
+if (response.success) {
+var is_interested_image = document.getElementsByClassName("is-interestedimage")[0];
+var interested_user_count = document.getElementsByClassName("interested-usercount")[0];
+if (response.is_interested) {
+is_interested_image.classList.add("fas");
+is_interested_image.classList.remove("far");
+interested_user_count.innerHTML = 
+parseFloat(interested_user_count.innerHTML) + 1;
+} else {
+is_interested_image.classList.add("far");
+is_interested_image.classList.remove("fas");
+interested_user_count.innerHTML = 
+parseFloat(interested_user_count.innerHTML) - 1;
+}
+} else if (!response.success && !response.is_logged_in) {
+59
+window.$("#login-modal").modal("show");
+}
+}
