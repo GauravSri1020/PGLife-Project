@@ -1,0 +1,809 @@
+1. index.php:
+<?php
+session_start();
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Welcome | PG Life</title>
+<?php
+include "includes/head_links.php";
+?>
+<link href="css/home.css" rel="stylesheet" />
+</head>
+<body>
+<?php
+include "includes/header.php";
+?>
+<div class="banner-container">
+<h2 class="white pb-3">Happiness per Square Foot</h2>
+<form id="search-form" action="property_list.php" method="GET">
+<div class="input-group city-search">
+<input type="text" class="form-control input-city" id='city'
+name='city' placeholder="Enter your city to search for PGs" />
+<div class="input-group-append">
+<button type="submit" class="btn btn-secondary">
+<i class="fa fa-search"></i>
+</button>
+</div>
+</div>
+</form>
+</div>
+<div class="page-container">
+<h1 class="city-heading">
+Major Cities
+</h1>
+<div class="row">
+<div class="city-card-container col-md">
+<a href="property_list.php?city=Delhi">
+<div class="city-card rounded-circle">
+<img src="img/delhi.png" class="city-img" />
+</div>
+</a>
+</div>
+<div class="city-card-container col-md">
+40
+<a href="property_list.php?city=Mumbai">
+<div class="city-card rounded-circle">
+<img src="img/mumbai.png" class="city-img" />
+</div>
+</a>
+</div>
+<div class="city-card-container col-md">
+<a href="property_list.php?city=Bengaluru">
+<div class="city-card rounded-circle">
+<img src="img/bangalore.png" class="city-img" />
+</div>
+</a>
+</div>
+<div class="city-card-container col-md">
+<a href="property_list.php?city=Hyderabad">
+<div class="city-card rounded-circle">
+<img src="img/hyderabad.png" class="city-img" />
+</div>
+</a>
+</div>
+</div>
+</div>
+<?php
+include "includes/signup_modal.php";
+include "includes/login_modal.php";
+include "includes/footer.php";
+?>
+</body>
+</html>
+2. dashboard.php:
+<?php
+session_start();
+require "includes/database_connect.php";
+if (!isset($_SESSION["user_id"])) {
+header("location: index.php");
+die();
+}
+$user_id = $_SESSION['user_id'];
+$sql_1 = "SELECT * FROM users WHERE id = $user_id";
+$result_1 = mysqli_query($conn, $sql_1);
+if (!$result_1) {
+echo "Something went wrong!";
+return;
+}
+41
+$user = mysqli_fetch_assoc($result_1);
+if (!$user) {
+echo "Something went wrong!";
+return;
+}
+$sql_2 = "SELECT *
+FROM interested_users_properties iup
+INNER JOIN properties p ON iup.property_id = p.id
+WHERE iup.user_id = $user_id";
+$result_2 = mysqli_query($conn, $sql_2);
+if (!$result_2) {
+echo "Something went wrong!";
+return;
+}
+$interested_properties = mysqli_fetch_all($result_2, MYSQLI_ASSOC);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Dashboard | PG Life</title>
+<?php
+include "includes/head_links.php";
+?>
+<link href="css/dashboard.css" rel="stylesheet" />
+</head>
+<body>
+<?php
+include "includes/header.php";
+?>
+<nav aria-label="breadcrumb">
+<ol class="breadcrumb py-2">
+<li class="breadcrumb-item">
+<a href="index.php">Home</a>
+</li>
+<li class="breadcrumb-item active" aria-current="page">
+Dashboard
+</li>
+</ol>
+</nav>
+<div class="my-profile page-container">
+<h1>My Profile</h1>
+<div class="row">
+<div class="col-md-3 profile-img-container">
+<i class="fas fa-user profile-img"></i>
+</div>
+<div class="col-md-9">
+<div class="row no-gutters justify-content-between align-items-end">
+<div class="profile">
+<div class="name"><?= $user['full_name'] ?></div>
+<div class="email"><?= $user['email'] ?></div>
+42
+<div class="phone"><?= $user['phone'] ?></div>
+<div class="college"><?= $user['college_name'] ?></div>
+</div>
+<div class="edit">
+<div class="edit-profile">Edit Profile</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<?php
+if (count($interested_properties) > 0) {
+?>
+<div class="my-interested-properties">
+<div class="page-container">
+<h1>My Interested Properties</h1>
+<?php
+foreach ($interested_properties as $property) {
+$property_images = glob("img/properties/" . $property['id'] . 
+"/*");
+?>
+<div class="property-card property-id-<?= $property['id'] ?> row">
+<div class="image-container col-md-4">
+<img src="<?= $property_images[0] ?>" />
+</div>
+<div class="content-container col-md-8">
+<div class="row no-gutters justify-content-between">
+<?php
+$total_rating = ($property['rating_clean'] + 
+$property['rating_food'] + $property['rating_safety']) / 3;
+$total_rating = round($total_rating, 1);
+?>
+<div class="star-container" title="<?= $total_rating
+?>">
+<?php
+$rating = $total_rating;
+for ($i = 0; $i < 5; $i++) {
+if ($rating >= $i + 0.8) {
+?>
+<i class="fas fa-star"></i>
+<?php
+} elseif ($rating >= $i + 0.3) {
+?>
+<i class="fas fa-star-half-alt"></i>
+<?php
+} else {
+?>
+<i class="far fa-star"></i>
+<?php
+}
+}
+?>
+</div>
+<div class="interested-container">
+<i class="is-interested-image fas fa-heart"
+property_id="<?= $property['id'] ?>"></i>
+43
+</div>
+</div>
+<div class="detail-container">
+<div class="property-name"><?= $property['name'] 
+?></div>
+<div class="property-address"><?= $property['address'] 
+?></div>
+<div class="property-gender">
+<?php
+if ($property['gender'] == "male") {
+?>
+<img src="img/male.png">
+<?php
+} elseif ($property['gender'] == "female") {
+?>
+<img src="img/female.png">
+<?php
+} else {
+?>
+<img src="img/unisex.png">
+<?php
+}
+?>
+</div>
+</div>
+<div class="row no-gutters">
+<div class="rent-container col-6">
+<div class="rent">₹ <?=
+number_format($property['rent']) ?>/-</div>
+<div class="rent-unit">per month</div>
+</div>
+<div class="button-container col-6">
+<a href="property_detail.php?property_id=<?=
+$property['id'] ?>" class="btn btn-primary">View</a>
+</div>
+</div>
+</div>
+</div>
+<?php
+}
+?>
+</div>
+</div>
+<?php
+}
+?>
+<?php
+include "includes/footer.php";
+?>
+<script type="text/javascript" src="js/dashboard.js"></script>
+</body>
+</html>
+44
+3. property_list.php:
+<?php
+session_start();
+require "includes/database_connect.php";
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : NULL;
+$city_name = $_GET["city"];
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title>Best PG's in <?php echo $city_name ?> | PG Life</title>
+<?php
+include "includes/head_links.php";
+?>
+<link href="css/property_list.css" rel="stylesheet" />
+</head>
+<body>
+<?php
+include "includes/header.php";
+?>
+<nav aria-label="breadcrumb">
+<ol class="breadcrumb py-2">
+<li class="breadcrumb-item">
+<a href="index.php">Home</a>
+</li>
+<li class="breadcrumb-item active" aria-current="page">
+<?php echo $city_name; ?>
+</li>
+</ol>
+</nav>
+<noscript>You need to enable JavaScript to run this app.</noscript>
+<div id="root">
+</div>
+<?php
+include "includes/signup_modal.php";
+include "includes/login_modal.php";
+include "includes/footer.php";
+?>
+<script>
+!(function (e) {
+function r (r) {
+for (
+45
+var n, a, p = r[0], l = r[1], f = r[2], c = 0, s = [];
+c < p.length;
+c++
+)
+(a = p[c]),
+Object.prototype.hasOwnProperty.call(o, a) &&
+o[a] &&
+s.push(o[a][0]),
+(o[a] = 0)
+for (n in l)
+Object.prototype.hasOwnProperty.call(l, n) && (e[n] = l[n])
+for (i && i(r); s.length; ) s.shift()()
+return u.push.apply(u, f || []), t()
+}
+function t () {
+for (var e, r = 0; r < u.length; r++) {
+for (var t = u[r], n = !0, p = 1; p < t.length; p++) {
+var l = t[p]
+0 !== o[l] && (n = !1)
+}
+n && (u.splice(r--, 1), (e = a((a.s = t[0]))))
+}
+return e
+}
+var n = {},
+o = { 1: 0 },
+u = []
+function a (r) {
+if (n[r]) return n[r].exports
+var t = (n[r] = { i: r, l: !1, exports: {} })
+return e[r].call(t.exports, t, t.exports, a), (t.l = !0), t.exports
+}
+;(a.m = e),
+(a.c = n),
+(a.d = function (e, r, t) {
+a.o(e, r) || Object.defineProperty(e, r, { enumerable: !0, get: t })
+}),
+(a.r = function (e) {
+'undefined' != typeof Symbol &&
+Symbol.toStringTag &&
+Object.defineProperty(e, Symbol.toStringTag, { value: 'Module' }),
+Object.defineProperty(e, '__esModule', { value: !0 })
+}),
+(a.t = function (e, r) {
+if ((1 & r && (e = a(e)), 8 & r)) return e
+if (4 & r && 'object' == typeof e && e && e.__esModule) return e
+var t = Object.create(null)
+if (
+(a.r(t),
+Object.defineProperty(t, 'default', { enumerable: !0, value: e }),
+2 & r && 'string' != typeof e)
+)
+for (var n in e)
+a.d(
+t,
+n,
+function (r) {
+return e[r]
+46
+}.bind(null, n)
+)
+return t
+}),
+(a.n = function (e) {
+var r =
+e && e.__esModule
+? function () {
+return e.default
+}
+: function () {
+return e
+}
+return a.d(r, 'a', r), r
+}),
+(a.o = function (e, r) {
+return Object.prototype.hasOwnProperty.call(e, r)
+}),
+(a.p = '/')
+var p = (this['webpackJsonpreact-app'] =
+this['webpackJsonpreact-app'] || []),
+l = p.push.bind(p)
+;(p.push = r), (p = p.slice())
+for (var f = 0; f < p.length; f++) r(p[f])
+var i = l
+t()
+})([])
+</script>
+<script src="js/2.bb328bef.chunk.js"></script>
+<script src="js/main.d86a88e7.chunk.js"></script>
+</body>
+</html>
+4. property_detail.php:
+<?php
+session_start();
+require "includes/database_connect.php";
+$user_id = isset($_SESSION['user_id']) ? $_SESSION['user_id'] : NULL;
+$property_id = $_GET["property_id"];
+$sql_1 = "SELECT *, p.id AS property_id, p.name AS property_name, c.name AS city_name 
+FROM properties p
+INNER JOIN cities c ON p.city_id = c.id 
+WHERE p.id = $property_id";
+$result_1 = mysqli_query($conn, $sql_1);
+47
+if (!$result_1) {
+echo "Something went wrong!";
+return;
+}
+$property = mysqli_fetch_assoc($result_1);
+if (!$property) {
+echo "Something went wrong!";
+return;
+}
+$sql_2 = "SELECT * FROM testimonials WHERE property_id = $property_id";
+$result_2 = mysqli_query($conn, $sql_2);
+if (!$result_2) {
+echo "Something went wrong!";
+return;
+}
+$testimonials = mysqli_fetch_all($result_2, MYSQLI_ASSOC);
+$sql_3 = "SELECT a.*
+FROM amenities a
+INNER JOIN properties_amenities pa ON a.id = pa.amenity_id
+WHERE pa.property_id = $property_id";
+$result_3 = mysqli_query($conn, $sql_3);
+if (!$result_3) {
+echo "Something went wrong!";
+return;
+}
+$amenities = mysqli_fetch_all($result_3, MYSQLI_ASSOC);
+$sql_4 = "SELECT * FROM interested_users_properties WHERE property_id = $property_id";
+$result_4 = mysqli_query($conn, $sql_4);
+if (!$result_4) {
+echo "Something went wrong!";
+return;
+}
+$interested_users = mysqli_fetch_all($result_4, MYSQLI_ASSOC);
+$interested_users_count = mysqli_num_rows($result_4);
+?>
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta name="viewport" content="width=device-width, initial-scale=1">
+<title><?= $property['property_name']; ?> | PG Life</title>
+<?php
+include "includes/head_links.php";
+?>
+<link href="css/property_detail.css" rel="stylesheet" />
+</head>
+<body>
+<?php
+include "includes/header.php";
+48
+?>
+<nav aria-label="breadcrumb">
+<ol class="breadcrumb py-2">
+<li class="breadcrumb-item">
+<a href="index.php">Home</a>
+</li>
+<li class="breadcrumb-item">
+<a href="property_list.php?city=<?= $property['city_name']; ?>"><?=
+$property['city_name']; ?></a>
+</li>
+<li class="breadcrumb-item active" aria-current="page">
+<?= $property['property_name']; ?>
+</li>
+</ol>
+</nav>
+<div id="property-images" class="carousel slide" data-ride="carousel">
+<ol class="carousel-indicators">
+<?php
+$property_images = glob("img/properties/" . $property['property_id'] . 
+"/*");
+foreach ($property_images as $index => $property_image) {
+?>
+<li data-target="#property-images" data-slide-to="<?= $index ?>"
+class="<?= $index == 0 ? "active" : ""; ?>"></li>
+<?php
+}
+?>
+</ol>
+<div class="carousel-inner">
+<?php
+foreach ($property_images as $index => $property_image) {
+?>
+<div class="carousel-item <?= $index == 0 ? "active" : ""; ?>">
+<img class="d-block w-100" src="<?= $property_image ?>"
+alt="slide">
+</div>
+<?php
+}
+?>
+</div>
+<a class="carousel-control-prev" href="#property-images" role="button" dataslide="prev">
+<span class="carousel-control-prev-icon" aria-hidden="true"></span>
+<span class="sr-only">Previous</span>
+</a>
+<a class="carousel-control-next" href="#property-images" role="button" dataslide="next">
+<span class="carousel-control-next-icon" aria-hidden="true"></span>
+<span class="sr-only">Next</span>
+</a>
+</div>
+<div class="property-summary page-container">
+<div class="row no-gutters justify-content-between">
+<?php
+49
+$total_rating = ($property['rating_clean'] + $property['rating_food'] + 
+$property['rating_safety']) / 3;
+$total_rating = round($total_rating, 1);
+?>
+<div class="star-container" title="<?= $total_rating ?>">
+<?php
+$rating = $total_rating;
+for ($i = 0; $i < 5; $i++) {
+if ($rating >= $i + 0.8) {
+?>
+<i class="fas fa-star"></i>
+<?php
+} elseif ($rating >= $i + 0.3) {
+?>
+<i class="fas fa-star-half-alt"></i>
+<?php
+} else {
+?>
+<i class="far fa-star"></i>
+<?php
+}
+}
+?>
+</div>
+<div class="interested-container">
+<?php
+$is_interested = false;
+foreach ($interested_users as $interested_user) {
+if ($interested_user['user_id'] == $user_id) {
+$is_interested = true;
+}
+}
+if ($is_interested) {
+?>
+<i class="is-interested-image fas fa-heart"></i>
+<?php
+} else {
+?>
+<i class="is-interested-image far fa-heart"></i>
+<?php
+}
+?>
+<div class="interested-text">
+<span class="interested-user-count"><?= $interested_users_count
+?></span> interested
+</div>
+</div>
+</div>
+<div class="detail-container">
+<div class="property-name"><?= $property['property_name'] ?></div>
+<div class="property-address"><?= $property['address'] ?></div>
+<div class="property-gender">
+<?php
+if ($property['gender'] == "male") {
+?>
+<img src="img/male.png">
+<?php
+50
+} elseif ($property['gender'] == "female") {
+?>
+<img src="img/female.png">
+<?php
+} else {
+?>
+<img src="img/unisex.png">
+<?php
+}
+?>
+</div>
+</div>
+<div class="row no-gutters">
+<div class="rent-container col-6">
+<div class="rent">₹ <?= number_format($property['rent']) ?>/-</div>
+<div class="rent-unit">per month</div>
+</div>
+<div class="button-container col-6">
+<a href="#" class="btn btn-primary">Book Now</a>
+</div>
+</div>
+</div>
+<div class="property-amenities">
+<div class="page-container">
+<h1>Amenities</h1>
+<div class="row justify-content-between">
+<div class="col-md-auto">
+<h5>Building</h5>
+<?php
+foreach ($amenities as $amenity) {
+if ($amenity['type'] == "Building") {
+?>
+<div class="amenity-container">
+<img src="img/amenities/<?= $amenity['icon'] ?>.svg">
+<span><?= $amenity['name'] ?></span>
+</div>
+<?php
+}
+}
+?>
+</div>
+<div class="col-md-auto">
+<h5>Common Area</h5>
+<?php
+foreach ($amenities as $amenity) {
+if ($amenity['type'] == "Common Area") {
+?>
+<div class="amenity-container">
+<img src="img/amenities/<?= $amenity['icon'] ?>.svg">
+<span><?= $amenity['name'] ?></span>
+</div>
+<?php
+}
+}
+?>
+</div>
+51
+<div class="col-md-auto">
+<h5>Bedroom</h5>
+<?php
+foreach ($amenities as $amenity) {
+if ($amenity['type'] == "Bedroom") {
+?>
+<div class="amenity-container">
+<img src="img/amenities/<?= $amenity['icon'] ?>.svg">
+<span><?= $amenity['name'] ?></span>
+</div>
+<?php
+}
+}
+?>
+</div>
+<div class="col-md-auto">
+<h5>Washroom</h5>
+<?php
+foreach ($amenities as $amenity) {
+if ($amenity['type'] == "Washroom") {
+?>
+<div class="amenity-container">
+<img src="img/amenities/<?= $amenity['icon'] ?>.svg">
+<span><?= $amenity['name'] ?></span>
+</div>
+<?php
+}
+}
+?>
+</div>
+</div>
+</div>
+</div>
+<div class="property-about page-container">
+<h1>About the Property</h1>
+<p><?= $property['description'] ?></p>
+</div>
+<div class="property-rating">
+<div class="page-container">
+<h1>Property Rating</h1>
+<div class="row align-items-center justify-content-between">
+<div class="col-md-6">
+<div class="rating-criteria row">
+<div class="col-6">
+<i class="rating-criteria-icon fas fa-broom"></i>
+<span class="rating-criteria-text">Cleanliness</span>
+</div>
+<div class="rating-criteria-star-container col-6" title="<?=
+$property['rating_clean'] ?>">
+<?php
+$rating = $property['rating_clean'];
+for ($i = 0; $i < 5; $i++) {
+if ($rating >= $i + 0.8) {
+?>
+52
+<i class="fas fa-star"></i>
+<?php
+} elseif ($rating >= $i + 0.3) {
+?>
+<i class="fas fa-star-half-alt"></i>
+<?php
+} else {
+?>
+<i class="far fa-star"></i>
+<?php
+}
+}
+?>
+</div>
+</div>
+<div class="rating-criteria row">
+<div class="col-6">
+<i class="rating-criteria-icon fas fa-utensils"></i>
+<span class="rating-criteria-text">Food Quality</span>
+</div>
+<div class="rating-criteria-star-container col-6" title="<?=
+$property['rating_food'] ?>">
+<?php
+$rating = $property['rating_food'];
+for ($i = 0; $i < 5; $i++) {
+if ($rating >= $i + 0.8) {
+?>
+<i class="fas fa-star"></i>
+<?php
+} elseif ($rating >= $i + 0.3) {
+?>
+<i class="fas fa-star-half-alt"></i>
+<?php
+} else {
+?>
+<i class="far fa-star"></i>
+<?php
+}
+}
+?>
+</div>
+</div>
+<div class="rating-criteria row">
+<div class="col-6">
+<i class="rating-criteria-icon fa fa-lock"></i>
+<span class="rating-criteria-text">Safety</span>
+</div>
+<div class="rating-criteria-star-container col-6" title="<?=
+$property['rating_safety'] ?>">
+<?php
+$rating = $property['rating_safety'];
+for ($i = 0; $i < 5; $i++) {
+if ($rating >= $i + 0.8) {
+?>
+<i class="fas fa-star"></i>
+<?php
+53
+} elseif ($rating >= $i + 0.3) {
+?>
+<i class="fas fa-star-half-alt"></i>
+<?php
+} else {
+?>
+<i class="far fa-star"></i>
+<?php
+}
+}
+?>
+</div>
+</div>
+</div>
+<div class="col-md-4">
+<div class="rating-circle">
+<?php
+$total_rating = ($property['rating_clean'] + 
+$property['rating_food'] + $property['rating_safety']) / 3;
+$total_rating = round($total_rating, 1);
+?>
+<div class="total-rating"><?= $total_rating ?></div>
+<div class="rating-circle-star-container">
+<?php
+$rating = $total_rating;
+for ($i = 0; $i < 5; $i++) {
+if ($rating >= $i + 0.8) {
+?>
+<i class="fas fa-star"></i>
+<?php
+} elseif ($rating >= $i + 0.3) {
+?>
+<i class="fas fa-star-half-alt"></i>
+<?php
+} else {
+?>
+<i class="far fa-star"></i>
+<?php
+}
+}
+?>
+</div>
+</div>
+</div>
+</div>
+</div>
+</div>
+<div class="property-testimonials page-container">
+<h1>What people say</h1>
+<?php
+foreach ($testimonials as $testimonial) {
+?>
+<div class="testimonial-block">
+<div class="testimonial-image-container">
+<img class="testimonial-img" src="img/man.png">
+</div>
+54
+<div class="testimonial-text">
+<i class="fa fa-quote-left" aria-hidden="true"></i>
+<p><?= $testimonial['content'] ?></p>
+</div>
+<div class="testimonial-name">- <?= $testimonial['user_name'] ?></div>
+</div>
+<?php
+}
+?>
+</div>
+<?php
+include "includes/signup_modal.php";
+include "includes/login_modal.php";
+include "includes/footer.php";
+?>
+<script type="text/javascript" src="js/property_detail.js"></script>
+</body>
+</html>
+5. logout.php:
+<?php
+session_start();
+session_destroy();
+header("location: index.php")
